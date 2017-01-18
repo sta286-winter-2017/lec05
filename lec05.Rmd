@@ -1,0 +1,213 @@
+---
+title: "STA286 Lecture 04"
+author: "Neil Montgomery"
+date: "Last edited: `r format(Sys.time(), '%Y-%m-%d %H:%M')`"
+output: 
+  beamer_presentation:
+    keep_tex: TRUE
+    incremental: TRUE
+    df_print: tibble
+    fig_caption: FALSE
+classoption: aspectratio=169
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+options(tibble.width=70)
+```
+
+# real-valued functions with arguments that live inside sample spaces that eventually we will pretty much forget even exist
+
+## sample spaces: too general?
+
+The goal for *our* study of probability is to define a mathematical model for a variable in a dataset.
+
+Sample spaces are needed to define the important building block $P$ (probability function), but are not usually convenient.
+
+\pause e.g. six horses in a race, labelled 'A' through 'F'. You bet \$2 on 'D' to win. You will get \$6.75 if 'D' wins. 
+
+\pause What is the sample space? Some options:
+
+```{r}
+results <- replicate(4, paste0(sample(LETTERS[1:6]), sep="", collapse=""))
+```
+
+* all 6! possible orders of finish: $\{`r  paste0(results, collapse=", ")` \ldots\}$.
+
+* all possible combinations of the six horse distances run as functions of time.
+
+\pause But really all you care about is whether you suffer a \$2 loss or a \$4.75 profit, and it turns out to be better just to focus on that.
+
+## a new style of function to add to the stable
+
+We will now consider functions that have a sample space $S$ as a domain and range $\mathbb{R}$, e.g.
+
+```{r, results='asis', message=FALSE}
+library(tidyverse)
+library(xtable)
+add.to.row <- list(pos = list(length(results)), command="$\\vdots$ & $\\vdots$ \\\\")
+set.seed(1)
+print(xtable(data_frame('Element of $S$' = results, 'Value in $\\mathbb{R}$' = ifelse(substr(results,1,1)=="D", 4.75, -2)), align = "ccc"), sanitize.colnames.function = function(x){x}, comment=FALSE, include.rownames = FALSE, add.to.row=add.to.row, )
+```
+
+\pause Note the impossibility of doing things like drawing pictures of such functions. 
+
+So if all the usual function things like derivatives, local maxima, integrals etc. are not of interest, what do we do with these things?
+
+\pause All we care about are the *distributions* of such functions---roughly speaking the possible values in $\mathbb{R}$ and their probabilities. 
+
+## "random variables"
+
+Sadly these functions have a terrible name.
+
+Definition: A *random variable* is a real-valued function of a sample space. 
+
+More examples:
+
+**Toss to first head:** Count the number of tosses of a coin until the first `H` appears. 
+
+```{r, results='asis'}
+results <- sapply(0:4, function(x) paste0((function(x) paste0(rep("T", x), collapse = ""))(x), "H"))
+add.to.row <- list(pos = list(length(results)), command="$\\vdots$ & $\\vdots$ \\\\")
+
+print(xtable(data_frame('Element of $S$' = results, 'Value in $\\mathbb{R}$' = nchar(results)), align = "ccc"), sanitize.colnames.function = function(x){x}, comment=FALSE, include.rownames = FALSE, add.to.row=add.to.row, )
+```
+
+## examples of random variables
+
+**See if a product is defective:** Select an item at random from a factory. See if it is defective. Define the following function:
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{cc}
+  \hline
+Element of $S$ & Value in $\mathbb{R}$ \\ 
+  \hline
+Defective &   1 \\ 
+Not Defective & 0 \\ \hline
+\end{tabular}
+\end{table}
+
+\pause Seems like a stupid example, but this is merely an instance of one of the most important random variables of all. To generalize:
+
+**"Bernoulli trial"** (book: *Bernoulli random variable*) Observe a random process to see if an event $A$ occurred. The *indicator function* $I_A$ which takes on the value 1 if $A$ occurred and 0 otherwise is called a Bernoulli trial. 
+
+## more examples of random variables
+
+**Bus stop** Busses arrive at a stop at 10 minute intervals. You arrive at the bus stop at a random time. Observe the amount of time you have to wait for the next bus. 
+
+\pause This random variable is of a fundamentally different character from the other examples. This random variable could take on *any* real number between 0 and 10 (using minutes as the unit of measure.)
+
+\pause \textbf{Failure time(s)} Observe a pump until its bearing fails. Observe a pump until its seal fails. Observe a pump until either component fails. 
+
+These random variables could take on any positive real number.
+
+## notation and naming conventions
+
+Random variables are given names that tend to be capital Roman letters near the end of the alphabet.
+$$X: S \to \mathbb{R}$$
+\pause Usual names: $X$, $Y$, $Z$, $X_1$, $X_2$, $X_3$, etc.
+
+(Just like in calculus: $f$, $g$, $h$, $f_1$, $f_2$, etc.)
+
+\pause In calculus one tends to conflate $f$ (the function name) and $f(x)$ (the value at a generic $x$)
+
+In probability we just use the function name, i.e. $X$. 
+
+\pause Is notation important? If you like to watch the world burn put this on a calculus exam:
+$$\int\limits_0^{2\pi} sin(f)\,df$$
+
+## values of random variables imply events
+
+For any random variable $X$, any subset of the real line you could think of implies an event. 
+
+Examples:
+
+\textbf{Toss to first head:} Let $X$ be the number of tosses. 
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{cc}
+  \hline
+$X$ taking on any of these values & Implies this event \\ 
+  \hline
+\onslide<1->{ $X \in \{1\}$} &  \onslide<2->{$\{H\}$} \\ 
+\onslide<3->{ $X \in [2,4]$} &  \onslide<4->{$\{TH, TTH, TTTH\}$} \\ 
+\onslide<5->{ $X \in [2,4)$} &  \onslide<6->{$\{TH, TTH\}$} \\ 
+\onslide<7->{ $X \in (-9, -3.2]$} &  \onslide<8->{$\emptyset$} \\ 
+\onslide<9->{ $X \in [0.5, 1.3) \cup (\pi, \pi + 1)$} &  \onslide<10->{$\{H, TTTH\}$} \\ 
+\onslide<10->{ $X \in [0, \infty)$} &  \onslide<11->{$S$} \\ \hline
+\end{tabular}
+\end{table}
+
+## distribution of a random variable
+
+The distribution of a random variable is the mapping between values of $X$ and their probabilities of the implied events. 
+
+(Over-)simplified: the values, and their probabilities.
+
+Examples:
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{cc}
+  \hline
+$X$ taking on any of these values & Probability \\ 
+  \hline
+\onslide<1->{ $X \in \{1\}$} &  \onslide<2->{$\frac{1}{2}$} \\ 
+\onslide<3->{ $X \in [2,4]$} &  \onslide<4->{$\frac{1}{4} + \frac{1}{8} + \frac{1}{16} = \frac{7}{16}$} \\ 
+\onslide<5->{ $X \in [2,4)$} &  \onslide<6->{$\frac{1}{4} + \frac{1}{8} = \frac{3}{8}$} \\ 
+\onslide<7->{ $X \in (-9, -3.2]$} &  \onslide<8->{$0$} \\ 
+\onslide<9->{ $X \in [0.5, 1.3) \cup (\pi, \pi + 1)$} &  \onslide<10->{$\frac{1}{2} + \frac{1}{8} = \frac{5}{8}$} \\ 
+\onslide<11->{ $X \in [0, \infty)$} &  \onslide<12->{$1$} \\ \hline
+\end{tabular}
+\end{table}
+
+## distribution in the bus stop example
+
+$X$ is the amount of time you wait for the bus, with the idea that the bus could come at any random time in the next 10 minutes "uniformly"
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{cc}
+  \hline
+$X$ taking on any of these values & Probability \\ 
+  \hline
+\onslide<1->{ $X \in [2,4]$} &  \onslide<2->{$\frac{2}{10}$} \\ 
+\onslide<3->{ $X \in [3,5]$} &  \onslide<4->{$\frac{2}{10}$} \\ 
+\onslide<5->{ $X \in (-9, -3.2]$} &  \onslide<6->{$0$} \\ 
+\onslide<7->{ $X \in [0.5, 1.3) \cup (\pi, \pi + 1)$} &  \onslide<8->{$\frac{0.8}{10} + \frac{\pi}{10}$} \\ 
+\onslide<9->{ $X \in [2, 2.1]$} &  \onslide<10->{$0.01$} \\
+\onslide<11->{ $X \in [2, 2.001]$} &  \onslide<12->{$0.0001$} \\
+\onslide<13->{ $X \in \{2\}$} &  \onslide<14->{$0$} \\ \hline
+\end{tabular}
+\end{table}
+
+## more notation
+
+Here's how we will actually write the probability statements:
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{ll}
+  \hline
+Inconvenient & Usual Notation \\ 
+  \hline
+{ $X \in [2,4]$} & {$P(2 \le X \le 4) = \frac{2}{10}$} \\ 
+{ $X \in [3,5]$} &  {$P(3 \le X \le 5) = \frac{2}{10}$} \\ 
+{ $X \in (-9, -3.2]$} &  {$P(-9 < X \le -3.2) = 0$} \\ 
+{ $X \in \{2\}$} &  {$P(X = 2) = 0$} \\ \hline
+\end{tabular}
+\end{table}
+
+## distributions and their representations
+
+\textbf{When you know the distribution of a random variable, you know everything} \textit{(as far as probability theory goes.)}
+
+\pause It's clear from the examples that "distribution" is a complex object, so we'll need convenient representations for them. Here is the first one.
+
+\pause ("Theorem":)the distribution of any random variable $X$ is completely determined by the following function $F:\mathbb{R}\to\mathbb{R}$, defined at every $x \in \mathbb{R}:$
+$$F(x) = P(X \le x).$$
+$F$ is called the \textit{cumulative distribution function} of $X$, or cdf for short.
+
+
